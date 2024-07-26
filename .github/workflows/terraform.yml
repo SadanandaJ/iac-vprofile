@@ -53,8 +53,10 @@ jobs:
 
       - name: Terraform plan
         id: plan
-        run: terraform plan -no-color -input=false -out planfile
+        run: |
+          terraform plan -no-color -input=false -out planfile
+          echo "plan_outcome=$?" >> $GITHUB_ENV
 
       - name: Terraform plan status
-        if: steps.plan.outcome == 'failure'
+        if: env.plan_outcome != '0'
         run: exit 1
