@@ -1,28 +1,31 @@
 name: "Vprofile IAC"
+
 on:
   push:
     branches:
-    - main
-    - stage
+      - main
+      - stage
     paths:
-    - terraform/**
+      - terraform/**
   pull_request:
     branches:
-    - main
+      - main
     paths:
-    - terraform/**
+      - terraform/**
+
 env:
-  #credentials for deployment to aws
+  # credentials for deployment to AWS
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: us-east-1
-  #s3 bucket secret key
+  # S3 bucket secret key
   BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}
   EKS_CLUSTER: vprofile-eks
+
 jobs:
   terraform:
-    name: "apply terraform code changes"
-    runs-on: Ubuntu-latest
+    name: "Apply Terraform Code Changes"
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -30,23 +33,28 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
       - name: Setup Terraform with specified version
         uses: hashicorp/setup-terraform@v1.4.0
-       # with:
-       # terraform_version: 1.1.3
+        with:
+          terraform_version: 1.1.3
+
       - name: Terraform init
         id: init 
-        run: terraform init backend-config="bucket=$BUCKET_TF_STATE"
+        run: terraform init -backend-config="bucket=${{ env.BUCKET_TF_STATE }}"
+
       - name: Terraform format
         id: fmt
         run: terraform fmt -check
-      - name: terraform validate
+
+      - name: Terraform validate
         id: validate
         run: terraform validate
-      - name: terraform plan
+
+      - name: Terraform plan
         id: plan
         run: terraform plan -no-color -input=false -out planfile
-        continue-on-error: true
-      - name: terraform plan status
-        if: steps.plan.outcome == 'falure'
+
+      - name: Terraform plan status
+        if: steps.plan.outcome == 'failure'
         run: exit 1
